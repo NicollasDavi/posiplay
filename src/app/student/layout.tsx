@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
@@ -28,7 +27,8 @@ export default function RootLayout({
     <html lang="pt-br">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-100 text-gray-900`}>
         <Navbar />
-        <main className="min-h-screen">{children}</main>
+        {/* Ajustando a margem superior para compensar a altura do Navbar */}
+        <main className="min-h-screen pt-16">{children}</main> {/* pt-20 (padding-top) para ajustar */}
         <HelpButton />
       </body>
     </html>
