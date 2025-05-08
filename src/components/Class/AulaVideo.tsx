@@ -1,33 +1,75 @@
-import { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import Hls from "hls.js";  // Importando a biblioteca HLS.js
 
-const AulaVideo = () => {
+const AulaVideo: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    // Conectar ao WebSocket
+    const socket = new WebSocket("ws://localhost:8000/video_stream");
+
+    socket.onopen = () => {
+      console.log("Conectado ao WebSocket");
+    };
+
+    // Receber dados do WebSocket
+    socket.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setVideoUrl(data.output_path);  // A URL do stream recebida
+      setIsPlaying(true);
+    };
+
+    socket.onerror = (error) => {
+      console.error("Erro no WebSocket:", error);
+    };
+
+    socket.onclose = () => {
+      console.log("WebSocket desconectado");
+    };
+
+    return () => {
+      socket.close(); // Fechar o WebSocket ao desmontar o componente
+    };
+  }, []); // O useEffect será chamado apenas uma vez
+
+  useEffect(() => {
+    if (videoUrl && videoRef.current) {
+      // Se o HLS.js estiver disponível no navegador, vamos usá-lo
+      if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(videoUrl);
+        hls.attachMedia(videoRef.current);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          videoRef.current?.play();
+        });
+      }
+      // Caso contrário, usamos o método nativo (para navegadores que já suportam HLS)
+      else if (videoRef.current.canPlayType("application/vnd.apple.mpegurl")) {
+        videoRef.current.src = videoUrl;
+        videoRef.current.addEventListener("canplay", () => videoRef.current?.play());
+      }
+    }
+  }, [videoUrl]);
 
   return (
     <div className="mb-6">
       <div className="relative w-full" style={{ paddingBottom: "56.25%" }}>
-        <iframe
-          className="absolute top-0 left-0 w-full h-full"
-          src="https://www.youtube.com/embed/dQw4w9WgXcQ"
-          title="Aula de Matemática"
-          frameBorder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
-      <div className="flex justify-center mt-4">
-        <button
-          onClick={() => setIsPlaying(true)}
-          className="bg-[#F99F1B] text-white py-2 px-6 rounded-lg hover:bg-[#e68a00] transition"
-        >
-          Iniciar Aula
-        </button>
-        <button
-          onClick={() => setIsPlaying(false)}
-          className="bg-[#F99F1B] text-white py-2 px-6 ml-4 rounded-lg hover:bg-[#e68a00] transition"
-        >
-          Pausar Aula
-        </button>
+        {isPlaying ? (
+          <video
+            ref={videoRef}
+            className="absolute top-0 left-0 w-full h-full"
+            controls
+            autoPlay
+          >
+            Seu navegador não suporta HLS.
+          </video>
+        ) : (
+          <p className="text-center text-lg text-gray-500">
+            Não há transmissão ao vivo no momento.
+          </p>
+        )}
       </div>
     </div>
   );
