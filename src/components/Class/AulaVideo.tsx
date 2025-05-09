@@ -8,7 +8,7 @@ const AulaVideo: React.FC = () => {
 
   useEffect(() => {
     // Conectar ao WebSocket
-    const socket = new WebSocket("ws://localhost:8000/video_stream");
+    const socket = new WebSocket("ws://localhost:8000/video_stream/aula123");
 
     socket.onopen = () => {
       console.log("Conectado ao WebSocket");

@@ -16,12 +16,11 @@ const TransmissaoPage: React.FC = () => {
     try {
       // Solicitar permissão para usar a câmera e o microfone
       const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      
+
       // Abrir a conexão WebSocket
       const ws = new WebSocket(`ws://localhost:8000/video_stream/${streamId}`);
       websocketRef.current = ws;
-
-      ws.binaryType = "arraybuffer"; // Tipo de dados do WebSocket
+      ws.binaryType = "arraybuffer"; // Tipo de dados do WebSocket (arraybuffer para enviar binário)
 
       // Quando a conexão WebSocket for aberta, iniciar o MediaRecorder
       ws.onopen = () => {
@@ -39,7 +38,7 @@ const TransmissaoPage: React.FC = () => {
         recorder.start(200); // Envia a cada 200ms
         mediaRecorderRef.current = recorder; // Armazenar o MediaRecorder
         setIsStreaming(true);
-        setVideoUrl(`/gravacoes/${streamId}/index.m3u8`); // URL do vídeo HLS
+        setVideoUrl(`/gravacoes/${streamId}/index.m3u8`); // URL do vídeo HLS para reprodução
       };
 
       // Tratamento de erro no WebSocket
@@ -68,7 +67,7 @@ const TransmissaoPage: React.FC = () => {
     try {
       // Parar o MediaRecorder
       mediaRecorderRef.current?.stop();
-      
+
       // Fechar a conexão WebSocket
       if (websocketRef.current?.readyState === WebSocket.OPEN) {
         websocketRef.current?.close();
